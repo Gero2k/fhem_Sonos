@@ -3,12 +3,13 @@
 #############################################################################
 
 # Image und Version
-# Debian --> debian:jessie
+# Debian --> debian:buster
 # RPi    --> resin/rpi-raspbian:latest
 # Ubuntu --> ubuntu:latest
-FROM debian:jessie
 
-MAINTAINER Erdmaennchen <ich@welt.com>
+FROM debian:buster
+
+MAINTAINER C.Plasa <ich@du.de>
 
 ############################################################################
 # Benutzdefinierte Parameter
@@ -17,8 +18,8 @@ MAINTAINER Erdmaennchen <ich@welt.com>
 # Timezone
 ENV TZ="Europe/Berlin"
 
-#F HEM
-ENV FHEM_VERSION 5.8
+# FHEM
+ENV FHEM_VERSION 6.0
 
 ############################################################################
 # Laufwerke (docker volume) erstellen
@@ -73,7 +74,7 @@ RUN echo ${TZ} > /etc/timezone && dpkg-reconfigure tzdata
 # Pakete installieren
 ############################################################################
 
-# non-free & contrib Quellen hinzufügen (snmp-mibs-downloader)
+# non-free & contrib Quellen hinzufÃ¼gen (snmp-mibs-downloader)
 RUN sed -i "s/$/ contrib non-free/g" etc/apt/sources.list
 
 # Neue Quellen updaten & Install dependencies
@@ -122,7 +123,7 @@ libtext-diff-perl \
 libsoap-lite-perl \
 libxml-parser-lite-perl
 
-# Install für SONOS
+# Install fÃ¼r SONOS
 #RUN cpan SOAP::Lite
 
 # Install fhem
