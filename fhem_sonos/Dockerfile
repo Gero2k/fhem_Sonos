@@ -1,152 +1,34 @@
-############################################################################
-# FHEM SONOS
-#############################################################################
-
-# Image und Version
-# Debian --> debian:buster
-# RPi    --> resin/rpi-raspbian:latest
-# Ubuntu --> ubuntu:latest
-
 FROM debian:buster
-
-MAINTAINER C.Plasa <ich@du.de>
-
-############################################################################
-# Benutzdefinierte Parameter
-############################################################################
-
-# Timezone
-ENV TZ="Europe/Berlin"
-
-# FHEM
-ENV FHEM_VERSION 6.0
-
-############################################################################
-# Laufwerke (docker volume) erstellen
-############################################################################
-
-# Dockerfile             Docker volume erstellen
-# docker-compose (yml)   Docker volume in container mounten
-
-# VOLUME /my_vol
-
-############################################################################
-# Portfreigabe
-############################################################################
-
-# host
-
-############################################################################
-# Update/Install/Zeitzone
-############################################################################
-
-# Standart Pakete installieren
-ARG PACKAGE="nano wget git-core curl apt-transport-https usbutils net-tools tar xz-utils"
-
-# set version label
-ARG BUILD_DATE
-ARG VERSION
-LABEL build_version="Version:- ${VERSION} Build-date:- ${BUILD_DATE}"
-
-# Develepor Commands
-ARG _clean="cd / && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*"
-ARG _apt_clean="eval apt-get clean && $_clean"
-ARG _update="eval apt-get update && apt-get upgrade -y --force-yes"
-ARG _install="eval apt-get install -y --force-yes"
-ARG _deinstall="eval apt-get purge -qq"
-
-# Develepor Parameter
 ENV DEBIAN_FRONTEND noninteractive
 ENV TERM xterm
 
-# Updates & Dist-Upgrades installieren
-RUN $_update && \
-apt-get install -y --force-yes --no-install-recommends apt-utils && \
-apt-get dist-upgrade -y --force-yes
-
-# Standart Pakete installieren
-RUN $_install $PACKAGE
-
-# Zeitzone einstellen
-RUN echo ${TZ} > /etc/timezone && dpkg-reconfigure tzdata
-
-############################################################################
-# Pakete installieren
-############################################################################
-
-# non-free & contrib Quellen hinzufügen (snmp-mibs-downloader)
-RUN sed -i "s/$/ contrib non-free/g" etc/apt/sources.list
-
-# Neue Quellen updaten & Install dependencies
-RUN $_update && $_install \
-perl \
-etherwake \
-dfu-programmer \
+# Install base environment
+RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends apt-utils
+RUN apt-get -y install \
+apt-transport-https \
 build-essential \
-snmpd \
+curl \
+cpanminus \
+dfu-programmer \
+etherwake \
+git \
+netcat \
+perl \
 snmp \
-snmp-mibs-downloader \
-telnet \
+snmpd \
 sqlite3 \
-samba \
-samba-common-bin \
-lirc
-
-# Install perl packages
-RUN $_install \
-libavahi-compat-libdnssd-dev \
-libalgorithm-merge-perl \
-libclass-dbi-mysql-perl \
-libclass-isa-perl \
-libcommon-sense-perl \
-libdatetime-format-strptime-perl \
-libdbi-perl \
-libdevice-serialport-perl \
-libdpkg-perl \
-liberror-perl \
-libfile-copy-recursive-perl \
-libfile-fcntllock-perl \
-libio-socket-ip-perl \
-libio-socket-ssl-perl \
-libjson-perl \
-libjson-xs-perl \
-libmail-sendmail-perl \
-libsocket-perl \
-libswitch-perl \
-libsys-hostname-long-perl \
-libterm-readkey-perl \
-libterm-readline-perl-perl \
+sudo \
+telnet \
+usbutils \
+vim \
+wget && \
+apt-get -y install \
 libwww-perl \
-libxml-simple-perl \
-libdbd-sqlite3-perl \
-libtext-diff-perl \
 libsoap-lite-perl \
 libxml-parser-lite-perl
 
-# Install für SONOS
-#RUN cpan SOAP::Lite
+EXPOSE 4711
 
-# Install fhem
-RUN wget https://fhem.de/fhem-${FHEM_VERSION}.deb && dpkg -i fhem-${FHEM_VERSION}.deb
-RUN userdel fhem
+WORKDIR "/opt/fhem/FHEM"
 
-WORKDIR "/opt/fhem"
-
-# Update Config kopieren
-COPY /data/fhem.cfg.update ./fhem.cfg
-
-# FEHM starten zum Updaten (durch notify in fhem.cfg)
-RUN perl fhem.pl fhem.cfg | tee /opt/fhem/log/fhem.log
-
-############################################################################
-# CleanUp
-############################################################################
-
-RUN $_update && $_apt_clean
-
-############################################################################
-# Start-Script
-############################################################################
-
-COPY entrypoint.sh /entrypoint.sh
-CMD bash /entrypoint.sh
+CMD perl 00_SONOS.pm 4711 3 1
